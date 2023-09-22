@@ -2,6 +2,7 @@
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 import { useStoreModal } from "@/hooks/use-store-modal";
 import { Modal } from "@/components/ui/modal";
@@ -15,13 +16,16 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 const formSchema = z.object({
   name: z.string().min(1),
 });
 
 export const StoreModal = () => {
-  const StoreModal = useStoreModal();
+  const storeModal = useStoreModal();
+
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -31,15 +35,24 @@ export const StoreModal = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    // TODO: Create Store
+    try {
+      setLoading(true);
+
+      const response = await axios.post("/api/stores", values);
+
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <Modal
       title="Створити бутік"
       description="Додати новий бутік для товарів та категорій"
-      isOpen={StoreModal.isOpen}
-      onClose={StoreModal.onClose}
+      isOpen={storeModal.isOpen}
+      onClose={storeModal.onClose}
     >
       <div>
         <div className="space-y-4 py-2 pb-4">
@@ -52,17 +65,27 @@ export const StoreModal = () => {
                   <FormItem>
                     <FormLabel>Назва</FormLabel>
                     <FormControl>
-                      <Input placeholder="E-commerce" {...field} />
+                      <Input
+                        disabled={loading}
+                        placeholder="Введіть назву магазину"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <div className="pt-6 space-x-2 flex items-center justify-end">
-                <Button variant="outline" onClick={StoreModal.onClose}>
+                <Button
+                  disabled={loading}
+                  variant="outline"
+                  onClick={storeModal.onClose}
+                >
                   Відмінити
                 </Button>
-                <Button type="submit">Продовжити</Button>
+                <Button disabled={loading} type="submit">
+                  Продовжити
+                </Button>
               </div>
             </form>
           </Form>
